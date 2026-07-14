@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Color Theory Buddy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="Mix a skin tone or color and see its value scale and wheel relationships." />
+<style>
+  :root {
+    --canvas: #e9e6e0;
+    --panel: #f4f2ee;
+    --ink: #211e1a;
+    --muted: #6b6560;
+    --line: #c7c1b7;
+    --steel: #3e6088;
+    --steel-ink: #ffffff;
+    --well-shadow: rgba(33, 30, 26, 0.14);
+    --radius-sm: 3px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --canvas: #18181a;
+      --panel: #222224;
+      --ink: #ece8e2;
+      --muted: #a39c93;
+      --line: #3a3836;
+      --steel: #8fb4d6;
+      --steel-ink: #12202c;
+      --well-shadow: rgba(0, 0, 0, 0.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --canvas: #18181a;
+    --panel: #222224;
+    --ink: #ece8e2;
+    --muted: #a39c93;
+    --line: #3a3836;
+    --steel: #8fb4d6;
+    --steel-ink: #12202c;
+    --well-shadow: rgba(0, 0, 0, 0.45);
+  }
+  :root[data-theme="light"] {
+    --canvas: #e9e6e0;
+    --panel: #f4f2ee;
+    --ink: #211e1a;
+    --muted: #6b6560;
+    --line: #c7c1b7;
+    --steel: #3e6088;
+    --steel-ink: #ffffff;
+    --well-shadow: rgba(33, 30, 26, 0.14);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: -apple-system, "Avenir Next", "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.45;
+  }
+
+  .serif {
+    font-family: ui-serif, "Iowan Old Style", "Palatino Linotype", "URW Palladio",
+      Georgia, "P052", serif;
+  }
+  .mono {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .wrap {
+    max-width: 76rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  header.masthead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 1.1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+  header.masthead h1 {
+    font-size: clamp(1.5rem, 2.4vw, 2rem);
+    font-weight: 600;
+    margin: 0;
+    text-wrap: balance;
+  }
+  header.masthead p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.92rem;
+    max-width: 32ch;
+  }
+
+  main {
+    display: grid;
+    grid-template-columns: minmax(15rem, 17rem) 1fr;
+    gap: 2.25rem;
+  }
+  main > * { min-width: 0; }
+  @media (max-width: 46rem) {
+    main { grid-template-columns: 1fr; }
+  }
+
+  /* ---- control rail ---- */
+  .rail {
+    display: flex;
+    flex-direction: column;
+    gap: 1.6rem;
+  }
+  .rail-block h2 {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--muted);
+    margin: 0 0 0.6rem;
+    font-weight: 600;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+  #colorInput {
+    flex: 1;
+    min-width: 0;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    color: var(--ink);
+    padding: 0.55rem 0.65rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+  }
+  #colorInput:focus-visible,
+  button:focus-visible,
+  input[type="color"]:focus-visible {
+    outline: 2px solid var(--steel);
+    outline-offset: 2px;
+  }
+  #colorPicker {
+    width: 2.6rem;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: none;
+    cursor: pointer;
+  }
+  #colorPicker::-webkit-color-swatch-wrapper { padding: 2px; }
+  #colorPicker::-webkit-color-swatch { border: none; border-radius: 2px; }
+
+  .helper {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 0.45rem;
+    min-height: 1.1em;
+  }
+
+  .chip-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--ink);
+    padding: 0.3rem 0.55rem 0.3rem 0.3rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .chip:hover { border-color: var(--steel); }
+  .chip .dot {
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 50%;
+    border: 1px solid var(--well-shadow);
+    flex-shrink: 0;
+  }
+
+  .segmented {
+    display: flex;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+  .segmented button {
+    flex: 1;
+    background: var(--panel);
+    color: var(--muted);
+    border: none;
+    padding: 0.5rem 0.4rem;
+    font-size: 0.82rem;
+    font-family: inherit;
+    cursor: pointer;
+    border-left: 1px solid var(--line);
+  }
+  .segmented button:first-child { border-left: none; }
+  .segmented button[aria-pressed="true"] {
+    background: var(--steel);
+    color: var(--steel-ink);
+    font-weight: 600;
+  }
+  .rail-note {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 0.5rem;
+  }
+
+  /* ---- results ---- */
+  .well {
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 1rem 1.15rem;
+    margin-bottom: 2rem;
+  }
+  .well .block {
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: var(--radius-sm);
+    box-shadow: inset 0 0 0 1px var(--well-shadow);
+    flex-shrink: 0;
+  }
+  .well dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.15rem 0.6rem;
+    font-size: 0.85rem;
+  }
+  .well dt { color: var(--muted); }
+  .well dd { margin: 0; }
+
+  section.results h2 {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--muted);
+    margin: 0 0 0.9rem;
+    font-weight: 600;
+  }
+  section.results > div { margin-bottom: 2.4rem; }
+
+  .strip {
+    display: flex;
+    gap: 0.65rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+  }
+  .swatch-card {
+    flex: 1 1 7.5rem;
+    min-width: 7.5rem;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    border: none;
+    background: none;
+    padding: 0;
+    text-align: left;
+    font-family: inherit;
+    color: inherit;
+  }
+  .swatch-card .block {
+    height: 4.75rem;
+    border-radius: var(--radius-sm);
+    box-shadow: inset 0 0 0 1px var(--well-shadow);
+    margin-bottom: 0.5rem;
+    position: relative;
+  }
+  .swatch-card .flash {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    border-radius: var(--radius-sm);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+  }
+  .swatch-card.copied .flash { opacity: 1; }
+  .swatch-card .label {
+    font-size: 0.86rem;
+    font-weight: 600;
+  }
+  .swatch-card .hex {
+    font-size: 0.76rem;
+    color: var(--muted);
+  }
+  .swatch-card .note {
+    font-size: 0.74rem;
+    color: var(--muted);
+    margin-top: 0.2rem;
+  }
+
+  .wheel-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 1.2rem;
+  }
+  .wheel-group h3 {
+    font-size: 0.86rem;
+    font-weight: 600;
+    margin: 0 0 0.55rem;
+  }
+  .dabs {
+    display: flex;
+    gap: 0.6rem;
+  }
+  .dab-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-family: inherit;
+    color: inherit;
+    padding: 0;
+  }
+  .dab-card .dot {
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px var(--well-shadow);
+  }
+  .dab-card .hex {
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  footer {
+    margin-top: 2.5rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--line);
+    font-size: 0.78rem;
+    color: var(--muted);
+    max-width: 62ch;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="masthead">
+    <h1 class="serif">Color Theory Buddy</h1>
+    <p>Mix a skin tone or color, see its value scale and wheel relationships.</p>
+  </header>
+
+  <main>
+    <div class="rail">
+      <div class="rail-block">
+        <h2>Color</h2>
+        <div class="input-row">
+          <input
+            id="colorInput"
+            class="mono"
+            type="text"
+            value="#E0AC81"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Color as hex, rgb(), or name"
+          />
+          <input id="colorPicker" type="color" value="#e0ac81" aria-label="Pick a color" />
+        </div>
+        <div class="helper" id="helperText">Hex, rgb(224,172,129), or a name below</div>
+      </div>
+
+      <div class="rail-block">
+        <h2>Presets</h2>
+        <div class="chip-grid" id="presetChips"></div>
+      </div>
+
+      <div class="rail-block">
+        <h2>Light source</h2>
+        <div class="segmented" id="lightToggle" role="group" aria-label="Light source">
+          <button data-temp="warm" aria-pressed="true">Warm</button>
+          <button data-temp="neutral" aria-pressed="false">Neutral</button>
+          <button data-temp="cool" aria-pressed="false">Cool</button>
+        </div>
+        <p class="rail-note">
+          Shadows lean cool under warm light, and warm under cool light &mdash;
+          same logic a painter uses to keep shadows from turning muddy.
+        </p>
+      </div>
+    </div>
+
+    <section class="results">
+      <div class="well" id="baseWell">
+        <div class="block" id="baseBlock"></div>
+        <dl>
+          <dt>Hex</dt><dd class="mono" id="baseHex">&nbsp;</dd>
+          <dt>RGB</dt><dd class="mono" id="baseRgb">&nbsp;</dd>
+          <dt>HSL</dt><dd class="mono" id="baseHsl">&nbsp;</dd>
+        </dl>
+      </div>
+
+      <div>
+        <h2>Value scale &mdash; highlight to shadow</h2>
+        <div class="strip" id="paletteStrip"></div>
+      </div>
+
+      <div>
+        <h2>On the color wheel</h2>
+        <div class="wheel-groups" id="wheelGroups"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Value-scale labels follow atelier portrait-painting terminology (highlight,
+    light, halftone, core shadow, reflected light, occlusion shadow) using
+    simplified HSL heuristics &mdash; a strong starting point, not a replacement
+    for your reference and your own eye. Click any swatch to copy its hex.
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- color model -------------------------------------------------
+
+  const NAMED_COLORS = {
+    black: "#000000", white: "#FFFFFF", gray: "#808080", grey: "#808080",
+    red: "#FF0000", orange: "#FFA500", yellow: "#FFFF00", green: "#008000",
+    blue: "#0000FF", purple: "#800080", pink: "#FFC0CB", brown: "#8B4513",
+    cyan: "#00FFFF", teal: "#008080", magenta: "#FF00FF", gold: "#FFD700",
+    navy: "#000080", olive: "#808000", maroon: "#800000", indigo: "#4B0082",
+    violet: "#EE82EE", turquoise: "#40E0D0", coral: "#FF7F50", salmon: "#FA8072",
+    khaki: "#F0E68C", lavender: "#E6E6FA", crimson: "#DC143C", scarlet: "#FF2400",
+    beige: "#F5F5DC", ivory: "#FFFFF0", tan: "#D2B48C", sienna: "#A0522D",
+    umber: "#635147", sepia: "#704214", ochre: "#CC7722",
+    fair: "#F6DCC8", light: "#EFC8A2", "light-medium": "#E0AC81",
+    medium: "#C68863", "tan-skin": "#A9724F", deep: "#7A4A32",
+    dark: "#4A2B1F", ebony: "#2E1A12",
+  };
+
+  const PRESET_CHIPS = [
+    "fair", "light", "light-medium", "medium", "tan-skin", "deep", "dark", "ebony",
+    "sienna", "umber", "ochre", "sepia",
+  ];
+
+  function clampRgb([r, g, b]) {
+    const c = (v) => Math.max(0, Math.min(255, Math.round(v)));
+    return [c(r), c(g), c(b)];
+  }
+
+  function hexToRgb(hex) {
+    hex = hex.replace("#", "");
+    if (hex.length === 3) hex = hex.split("").map((c) => c + c).join("");
+    const num = parseInt(hex, 16);
+    return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+  }
+
+  function rgbToHex([r, g, b]) {
+    [r, g, b] = clampRgb([r, g, b]);
+    return (
+      "#" + [r, g, b].map((v) => v.toString(16).padStart(2, "0").toUpperCase()).join("")
+    );
+  }
+
+  function parseColor(text) {
+    text = text.trim();
+    if (!text) return null;
+    const lowered = text.toLowerCase();
+    if (NAMED_COLORS[lowered]) return hexToRgb(NAMED_COLORS[lowered]);
+
+    if (/^#?[0-9a-f]{6}$/i.test(text) || /^#?[0-9a-f]{3}$/i.test(text)) {
+      return hexToRgb(text);
+    }
+
+    let m = lowered.match(/^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/);
+    if (m) return clampRgb([+m[1], +m[2], +m[3]]);
+
+    const parts = text.split(/[\s,]+/).filter(Boolean);
+    if (parts.length === 3 && parts.every((p) => /^-?\d+$/.test(p))) {
+      return clampRgb(parts.map(Number));
+    }
+    return null;
+  }
+
+  function rgbToHsl([r, g, b]) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    if (max === min) {
+      h = s = 0;
+    } else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        default: h = (r - g) / d + 4;
+      }
+      h /= 6;
+    }
+    return [h, s, l];
+  }
+
+  function hslToRgb([h, s, l]) {
+    if (s === 0) return clampRgb([l * 255, l * 255, l * 255]);
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    return clampRgb([
+      hue2rgb(p, q, h + 1 / 3) * 255,
+      hue2rgb(p, q, h) * 255,
+      hue2rgb(p, q, h - 1 / 3) * 255,
+    ]);
+  }
+
+  // light_frac moves lightness a fraction of the way toward white (+) or
+  // black (-) instead of by a flat amount, so an already-light base's
+  // "highlight" doesn't blow out to pure white and a dark base's "shadow"
+  // doesn't crush to pure black.
+  function adjust(rgb, hueShiftDeg, lightFrac, satMult) {
+    let [h, s, l] = rgbToHsl(rgb);
+    h = (h + hueShiftDeg / 360 + 1) % 1;
+    l = lightFrac >= 0 ? l + (1 - l) * lightFrac : l + l * lightFrac;
+    l = Math.max(0, Math.min(1, l));
+    s = Math.max(0, Math.min(1, s * satMult));
+    return hslToRgb([h, s, l]);
+  }
+
+  const PALETTE_STEPS = [
+    ["Highlight", 10, 0.60, 0.50, "brightest point, catches the light source’s color"],
+    ["Light", 5, 0.28, 0.85, "lit side of the form"],
+    ["Base", 0, 0, 1, "your original color"],
+    ["Halftone", 0, -0.22, 1.05, "turning point between light and shadow"],
+    ["Core Shadow", -18, -0.55, 1.15, "darkest edge, cools/warms opposite the light"],
+    ["Reflected Light", -6, -0.35, 0.95, "bounce light inside the shadow shape"],
+    ["Occlusion Shadow", -22, -0.75, 0.75, "darkest crevices, where forms meet"],
+  ];
+  const LIGHT_TEMPS = { warm: 1, neutral: 0, cool: -1 };
+
+  function buildPalette(rgb, lightTemp) {
+    const mult = LIGHT_TEMPS[lightTemp] ?? 1;
+    return PALETTE_STEPS.map(([label, hue, lightFrac, satMult, note]) => [
+      label,
+      label === "Base" ? rgb : adjust(rgb, hue * mult, lightFrac, satMult),
+      note,
+    ]);
+  }
+
+  function buildSchemes(rgb) {
+    return [
+      ["Complementary", [adjust(rgb, 180, 0, 1)]],
+      ["Analogous", [adjust(rgb, -30, 0, 1), adjust(rgb, 30, 0, 1)]],
+      ["Triadic", [adjust(rgb, 120, 0, 1), adjust(rgb, 240, 0, 1)]],
+      ["Split-Complementary", [adjust(rgb, 150, 0, 1), adjust(rgb, 210, 0, 1)]],
+    ];
+  }
+
+  // ---- copy to clipboard --------------------------------------------
+
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+    } else {
+      fallbackCopy(text);
+    }
+  }
+  function fallbackCopy(text) {
+    const el = document.createElement("textarea");
+    el.value = text;
+    el.style.position = "fixed";
+    el.style.opacity = "0";
+    document.body.appendChild(el);
+    el.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(el);
+  }
+  function flashCopied(el) {
+    el.classList.add("copied");
+    setTimeout(() => el.classList.remove("copied"), 900);
+  }
+
+  // ---- rendering ------------------------------------------------------
+
+  const els = {
+    colorInput: document.getElementById("colorInput"),
+    colorPicker: document.getElementById("colorPicker"),
+    helperText: document.getElementById("helperText"),
+    presetChips: document.getElementById("presetChips"),
+    lightToggle: document.getElementById("lightToggle"),
+    baseBlock: document.getElementById("baseBlock"),
+    baseHex: document.getElementById("baseHex"),
+    baseRgb: document.getElementById("baseRgb"),
+    baseHsl: document.getElementById("baseHsl"),
+    paletteStrip: document.getElementById("paletteStrip"),
+    wheelGroups: document.getElementById("wheelGroups"),
+  };
+
+  let lightTemp = "warm";
+  let currentRgb = hexToRgb("#E0AC81");
+
+  function render() {
+    const hex = rgbToHex(currentRgb);
+    const [h, s, l] = rgbToHsl(currentRgb);
+
+    els.baseBlock.style.background = hex;
+    els.baseHex.textContent = hex;
+    els.baseRgb.textContent = `${currentRgb[0]}, ${currentRgb[1]}, ${currentRgb[2]}`;
+    els.baseHsl.textContent = `${Math.round(h * 360)}°, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%`;
+    els.colorPicker.value = hex;
+
+    els.paletteStrip.innerHTML = "";
+    buildPalette(currentRgb, lightTemp).forEach(([label, rgb, note]) => {
+      const rowHex = rgbToHex(rgb);
+      const card = document.createElement("button");
+      card.className = "swatch-card";
+      card.type = "button";
+      card.setAttribute("aria-label", `${label}, ${rowHex}. Click to copy.`);
+      card.innerHTML = `
+        <span class="block" style="background:${rowHex}"><span class="flash">Copied</span></span>
+        <span class="label">${label}</span>
+        <span class="hex mono">${rowHex}</span>
+        <span class="note">${note}</span>
+      `;
+      card.addEventListener("click", () => {
+        copyText(rowHex);
+        flashCopied(card);
+      });
+      els.paletteStrip.appendChild(card);
+    });
+
+    els.wheelGroups.innerHTML = "";
+    buildSchemes(currentRgb).forEach(([name, colors]) => {
+      const group = document.createElement("div");
+      group.className = "wheel-group";
+      const dabs = colors
+        .map((c) => {
+          const cHex = rgbToHex(c);
+          return `<button type="button" class="dab-card" data-hex="${cHex}" aria-label="${name} ${cHex}. Click to copy.">
+            <span class="dot" style="background:${cHex}"><span class="flash"></span></span>
+            <span class="hex mono">${cHex}</span>
+          </button>`;
+        })
+        .join("");
+      group.innerHTML = `<h3>${name}</h3><div class="dabs">${dabs}</div>`;
+      els.wheelGroups.appendChild(group);
+    });
+    els.wheelGroups.querySelectorAll(".dab-card").forEach((card) => {
+      card.addEventListener("click", () => {
+        copyText(card.dataset.hex);
+        flashCopied(card);
+      });
+    });
+  }
+
+  function trySetFromText(text) {
+    const rgb = parseColor(text);
+    if (rgb) {
+      currentRgb = rgb;
+      els.helperText.textContent = "Hex, rgb(224,172,129), or a name below";
+      render();
+    } else if (text.trim()) {
+      els.helperText.textContent = `Keep going — couldn’t read “${text.trim()}” yet`;
+    }
+  }
+
+  els.colorInput.addEventListener("input", (e) => trySetFromText(e.target.value));
+  els.colorPicker.addEventListener("input", (e) => {
+    currentRgb = hexToRgb(e.target.value);
+    els.colorInput.value = rgbToHex(currentRgb);
+    els.helperText.textContent = "Hex, rgb(224,172,129), or a name below";
+    render();
+  });
+
+  PRESET_CHIPS.forEach((name) => {
+    const hex = NAMED_COLORS[name];
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "chip";
+    chip.innerHTML = `<span class="dot" style="background:${hex}"></span>${name}`;
+    chip.addEventListener("click", () => {
+      els.colorInput.value = name;
+      trySetFromText(name);
+    });
+    els.presetChips.appendChild(chip);
+  });
+
+  els.lightToggle.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-temp]");
+    if (!btn) return;
+    lightTemp = btn.dataset.temp;
+    els.lightToggle.querySelectorAll("button").forEach((b) =>
+      b.setAttribute("aria-pressed", String(b === btn))
+    );
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

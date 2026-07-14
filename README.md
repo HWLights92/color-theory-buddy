@@ -1,14 +1,32 @@
 # color-theory-buddy
 
-An interactive, terminal-based color theory assistant for painters and digital
-artists. Give it a skin tone or any color and it suggests a full painter's
-value palette — highlight, light, halftone, core shadow, reflected light,
-occlusion shadow — plus classic color-wheel schemes (complementary, analogous,
-triadic, split-complementary). Color swatches print right in your terminal.
+An interactive color theory assistant for painters and digital artists. Give
+it a skin tone or any color and it suggests a full painter's value palette —
+highlight, light, halftone, core shadow, reflected light, occlusion shadow —
+plus classic color-wheel schemes (complementary, analogous, triadic,
+split-complementary).
 
-No installs, no dependencies — just Python's standard library.
+Comes in two forms:
 
-## Running it on macOS
+- **`color_theory_buddy.py`** — a terminal app, no installs needed.
+- **`web/index.html`** — a browser app with click-to-copy swatches, a color
+  picker, and preset chips.
+
+## Web app
+
+Double-click `web/index.html` to open it directly in your browser — that's
+it, nothing to install or run. (If your browser blocks local-file scripts,
+serve it instead: `python3 -m http.server --directory web`, then visit
+`http://localhost:8000`.)
+
+Type a color into the box (or click a preset, or use the color picker) to see
+its value scale and wheel relationships update live. Click any swatch to copy
+its hex code. Use the light-source toggle to see shadows lean cool (under
+warm light) or warm (under cool light).
+
+## Terminal app
+
+### Running it on macOS
 
 1. Open **Terminal** (Applications → Utilities → Terminal, or search
    Spotlight for "Terminal").
@@ -24,7 +42,7 @@ No installs, no dependencies — just Python's standard library.
 
 That's it — no `pip install` needed.
 
-## Using it
+### Using it
 
 At the `>` prompt, type a color in any of these formats:
 
@@ -41,7 +59,7 @@ Other commands:
 - `help` — show command help.
 - `quit` / `exit` — leave.
 
-### Example
+#### Example
 
 ```
 > #E0AC81
