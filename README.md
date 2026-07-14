@@ -6,11 +6,35 @@ highlight, light, halftone, core shadow, reflected light, occlusion shadow —
 plus classic color-wheel schemes (complementary, analogous, triadic,
 split-complementary).
 
-Comes in two forms:
+Comes in three forms:
 
+- **`gui_app.py`** — a native macOS desktop app (CustomTkinter). Just run it;
+  it sets itself up.
 - **`color_theory_buddy.py`** — a terminal app, no installs needed.
 - **`web/index.html`** — a browser app with click-to-copy swatches, a color
   picker, and preset chips.
+
+## Desktop app
+
+```
+python3 gui_app.py
+```
+
+The first time you run it, it creates a throwaway virtual environment
+(`.venv-gui`, next to the script) and installs [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter)
+into it automatically, then relaunches itself there — you never have to run
+`pip install` by hand. Later runs reuse that environment and start instantly.
+
+This needs Python's built-in Tk support. The python.org macOS installer and
+Homebrew's `python-tk` both include it; if you see `ModuleNotFoundError: No
+module named 'tkinter'`, run `brew install python-tk` (matching your Python
+version) or reinstall Python from [python.org](https://www.python.org/downloads/).
+
+Type a color, click a preset chip, or use the native color picker (the small
+square next to the text field) to see the value scale and wheel schemes
+update live. Click any swatch to copy its hex code. The Appearance menu
+switches between System/Light/Dark, and Light Source switches between
+Warm/Neutral/Cool.
 
 ## Web app
 
