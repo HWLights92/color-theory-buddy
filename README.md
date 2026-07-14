@@ -1,18 +1,21 @@
 # color-theory-buddy
 
-An interactive color theory assistant for painters and digital artists. Give
-it a skin tone or any color and it suggests a full painter's value palette —
-highlight, light, halftone, core shadow, reflected light, occlusion shadow —
-plus classic color-wheel schemes (complementary, analogous, triadic,
-split-complementary).
+An interactive color theory assistant for painters and digital artists.
 
 Comes in three forms:
 
+- **`web/index.html`** — pick a color, get the color-wheel-based color to
+  shade with instead of black and highlight with instead of white. Works in
+  any browser, so you can keep it open next to Procreate, Photoshop, or
+  whatever you paint in.
 - **`gui_app.py`** — a native macOS desktop app (CustomTkinter). Just run it;
   it sets itself up.
 - **`color_theory_buddy.py`** — a terminal app, no installs needed.
-- **`web/index.html`** — a browser app with click-to-copy swatches, a color
-  picker, and preset chips.
+
+The desktop and terminal apps show a fuller atelier-style value scale
+(highlight through occlusion shadow) plus classic wheel schemes; the web app
+is intentionally narrower — just the one question painters actually ask:
+*what do I mix in instead of black/white?*
 
 ## Desktop app
 
@@ -39,14 +42,28 @@ Warm/Neutral/Cool.
 ## Web app
 
 Double-click `web/index.html` to open it directly in your browser — that's
-it, nothing to install or run. (If your browser blocks local-file scripts,
-serve it instead: `python3 -m http.server --directory web`, then visit
+it, nothing to install or run. On an iPad, open it in Safari and split-view
+it next to Procreate. (If your browser blocks local-file scripts, serve it
+instead: `python3 -m http.server --directory web`, then visit
 `http://localhost:8000`.)
 
-Type a color into the box (or click a preset, or use the color picker) to see
-its value scale and wheel relationships update live. Click any swatch to copy
-its hex code. Use the light-source toggle to see shadows lean cool (under
-warm light) or warm (under cool light).
+Type a color into the box (or click a preset, or use the color picker). You
+get two suggestions, both live-updating:
+
+- **Shade with** — instead of just going to black, mix in the color roughly
+  opposite your base on the wheel (e.g. a warm skin tone points you to
+  azure/blue-violet). Black only adds gray and flattens color; the
+  near-complement darkens it while keeping it looking like less light, not
+  less color.
+- **Highlight with** — instead of white, mix in a color near your base's hue
+  tinted toward the light source, so the highlight reads as brighter light
+  instead of a bleached-out hole.
+
+Below that, a color-wheel diagram plots your color (**B**) and both
+suggestions (**S**, **H**) so you can see the relationship, not just take it
+on faith. The light-source toggle (Warm/Neutral/Cool) nudges which side of
+the wheel the shadow/highlight suggestions lean toward. Click any swatch,
+marker, or legend entry to copy its hex code.
 
 ## Terminal app
 

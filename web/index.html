@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <title>Color Theory Buddy</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="description" content="Mix a skin tone or color and see its value scale and wheel relationships." />
+<meta name="description" content="Pick a color and see what to shade with instead of black, and highlight with instead of white." />
 <style>
   :root {
     --canvas: #e9e6e0;
@@ -258,39 +258,80 @@
   }
   section.results > div { margin-bottom: 2.4rem; }
 
-  .strip {
-    display: flex;
-    gap: 0.65rem;
-    overflow-x: auto;
-    padding-bottom: 0.25rem;
+  /* ---- shade/highlight suggestion cards ---- */
+  .suggest-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.4rem;
+    margin-bottom: 2.4rem;
   }
-  .swatch-card {
-    flex: 1 1 7.5rem;
-    min-width: 7.5rem;
+  @media (max-width: 40rem) {
+    .suggest-grid { grid-template-columns: 1fr; }
+  }
+  .suggest-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 1.2rem;
+  }
+  .suggest-card .kicker {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .suggest-card h3 {
+    margin: 0.2rem 0 0;
+    font-size: 1.08rem;
+  }
+  .suggest-card .swatch-row {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin: 1rem 0;
+  }
+  .suggest-card .arrow {
+    color: var(--muted);
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+  .suggest-card p.why {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin: 0;
+  }
+  .suggest-card p.why strong { color: var(--ink); }
+
+  .mini-swatch {
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    cursor: pointer;
+    align-items: flex-start;
+    gap: 0.35rem;
     border: none;
     background: none;
     padding: 0;
-    text-align: left;
+    cursor: pointer;
     font-family: inherit;
     color: inherit;
+    text-align: left;
   }
-  .swatch-card .block {
-    height: 4.75rem;
+  .mini-swatch .block {
+    width: 100%;
+    height: 3.75rem;
     border-radius: var(--radius-sm);
     box-shadow: inset 0 0 0 1px var(--well-shadow);
-    margin-bottom: 0.5rem;
     position: relative;
   }
-  .swatch-card .flash {
+  .mini-swatch .flash {
     position: absolute;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
     letter-spacing: 0.04em;
     background: rgba(0, 0, 0, 0.55);
@@ -300,57 +341,95 @@
     transition: opacity 0.15s ease;
     pointer-events: none;
   }
-  .swatch-card.copied .flash { opacity: 1; }
-  .swatch-card .label {
-    font-size: 0.86rem;
-    font-weight: 600;
-  }
-  .swatch-card .hex {
-    font-size: 0.76rem;
+  .mini-swatch.copied .flash { opacity: 1; }
+  .mini-swatch .tag {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
     color: var(--muted);
   }
-  .swatch-card .note {
-    font-size: 0.74rem;
-    color: var(--muted);
-    margin-top: 0.2rem;
-  }
+  .mini-swatch .name { font-size: 0.86rem; font-weight: 600; }
+  .mini-swatch .hex { font-size: 0.76rem; color: var(--muted); }
 
-  .wheel-groups {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-    gap: 1.2rem;
-  }
-  .wheel-group h3 {
-    font-size: 0.86rem;
-    font-weight: 600;
-    margin: 0 0 0.55rem;
-  }
-  .dabs {
+  /* ---- color wheel diagram ---- */
+  .wheel-panel {
     display: flex;
-    gap: 0.6rem;
+    gap: 2.2rem;
+    align-items: center;
+    flex-wrap: wrap;
   }
-  .dab-card {
+  .wheel-ring-wrap {
+    position: relative;
+    width: 14rem;
+    height: 14rem;
+    flex-shrink: 0;
+  }
+  .wheel-ring {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: conic-gradient(
+      from 0deg,
+      #ff0000, #ffff00 60deg, #00ff00 120deg,
+      #00ffff 180deg, #0000ff 240deg, #ff00ff 300deg, #ff0000 360deg
+    );
+    box-shadow: inset 0 0 0 1px var(--well-shadow), 0 0 0 1px var(--line);
+  }
+  .wheel-markers { position: absolute; inset: 0; }
+  .marker {
+    position: absolute;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    box-shadow: 0 0 0 2px var(--canvas), inset 0 0 0 1px var(--well-shadow);
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+  }
+  .marker.base { width: 2.3rem; height: 2.3rem; z-index: 2; }
+
+  .wheel-legend {
+    list-style: none;
+    margin: 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
+    gap: 0.6rem;
+    min-width: 11rem;
+  }
+  .wheel-legend button {
+    display: flex;
     align-items: center;
-    gap: 0.3rem;
+    gap: 0.6rem;
     border: none;
     background: none;
+    padding: 0;
     cursor: pointer;
     font-family: inherit;
     color: inherit;
-    padding: 0;
+    text-align: left;
   }
-  .dab-card .dot {
-    width: 2.6rem;
-    height: 2.6rem;
+  .wheel-legend .dot {
+    width: 1rem;
+    height: 1rem;
     border-radius: 50%;
     box-shadow: inset 0 0 0 1px var(--well-shadow);
+    flex-shrink: 0;
   }
-  .dab-card .hex {
-    font-size: 0.72rem;
+  .wheel-legend .role {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
     color: var(--muted);
+    display: block;
   }
+  .wheel-legend .name-hex { font-size: 0.85rem; }
 
   footer {
     margin-top: 2.5rem;
@@ -371,7 +450,7 @@
 <div class="wrap">
   <header class="masthead">
     <h1 class="serif">Color Theory Buddy</h1>
-    <p>Mix a skin tone or color, see its value scale and wheel relationships.</p>
+    <p>Pick a color. Stop reaching for black and white &mdash; see what the wheel says to mix in instead.</p>
   </header>
 
   <main>
@@ -406,8 +485,9 @@
           <button data-temp="cool" aria-pressed="false">Cool</button>
         </div>
         <p class="rail-note">
-          Shadows lean cool under warm light, and warm under cool light &mdash;
-          same logic a painter uses to keep shadows from turning muddy.
+          Nudges which wheel color gets suggested &mdash; under warm light,
+          shadows lean toward blue/violet; under cool light, toward
+          orange/red.
         </p>
       </div>
     </div>
@@ -416,29 +496,34 @@
       <div class="well" id="baseWell">
         <div class="block" id="baseBlock"></div>
         <dl>
+          <dt>Color</dt><dd class="mono" id="baseName">&nbsp;</dd>
           <dt>Hex</dt><dd class="mono" id="baseHex">&nbsp;</dd>
           <dt>RGB</dt><dd class="mono" id="baseRgb">&nbsp;</dd>
-          <dt>HSL</dt><dd class="mono" id="baseHsl">&nbsp;</dd>
         </dl>
       </div>
 
-      <div>
-        <h2>Value scale &mdash; highlight to shadow</h2>
-        <div class="strip" id="paletteStrip"></div>
-      </div>
+      <div class="suggest-grid" id="suggestGrid"></div>
 
       <div>
         <h2>On the color wheel</h2>
-        <div class="wheel-groups" id="wheelGroups"></div>
+        <div class="wheel-panel">
+          <div class="wheel-ring-wrap">
+            <div class="wheel-ring"></div>
+            <div class="wheel-markers" id="wheelMarkers"></div>
+          </div>
+          <ul class="wheel-legend" id="wheelLegend"></ul>
+        </div>
       </div>
     </section>
   </main>
 
   <footer>
-    Value-scale labels follow atelier portrait-painting terminology (highlight,
-    light, halftone, core shadow, reflected light, occlusion shadow) using
-    simplified HSL heuristics &mdash; a strong starting point, not a replacement
-    for your reference and your own eye. Click any swatch to copy its hex.
+    Black just adds gray and flattens color; white bleaches it out the same
+    way. Painters mix in a color from roughly the opposite side of the wheel
+    to shade, and a color near the light source's hue to highlight &mdash;
+    keeping the color alive instead of muddy. Simplified HSL heuristic, not a
+    replacement for your reference and your own eye. Click any swatch to
+    copy its hex.
   </footer>
 </div>
 
@@ -558,33 +643,73 @@
     return hslToRgb([h, s, l]);
   }
 
-  const PALETTE_STEPS = [
-    ["Highlight", 10, 0.60, 0.50, "brightest point, catches the light source’s color"],
-    ["Light", 5, 0.28, 0.85, "lit side of the form"],
-    ["Base", 0, 0, 1, "your original color"],
-    ["Halftone", 0, -0.22, 1.05, "turning point between light and shadow"],
-    ["Core Shadow", -18, -0.55, 1.15, "darkest edge, cools/warms opposite the light"],
-    ["Reflected Light", -6, -0.35, 0.95, "bounce light inside the shadow shape"],
-    ["Occlusion Shadow", -22, -0.75, 0.75, "darkest crevices, where forms meet"],
-  ];
-  const LIGHT_TEMPS = { warm: 1, neutral: 0, cool: -1 };
+  // Builds a color from the base's hue plus a shift, ignoring the base's own
+  // saturation/lightness -- used when we want an actual, recognizable
+  // "pigment" swatch (e.g. a clean blue-violet) rather than a muted
+  // derivative of the base color.
+  function hueOnlyColor(rgb, hueShiftDeg, s, l) {
+    let [h] = rgbToHsl(rgb);
+    h = (h + hueShiftDeg / 360 + 1) % 1;
+    return hslToRgb([h, s, l]);
+  }
 
-  function buildPalette(rgb, lightTemp) {
-    const mult = LIGHT_TEMPS[lightTemp] ?? 1;
-    return PALETTE_STEPS.map(([label, hue, lightFrac, satMult, note]) => [
-      label,
-      label === "Base" ? rgb : adjust(rgb, hue * mult, lightFrac, satMult),
-      note,
+  function blend(rgbA, rgbB, amount) {
+    return clampRgb([
+      rgbA[0] + (rgbB[0] - rgbA[0]) * amount,
+      rgbA[1] + (rgbB[1] - rgbA[1]) * amount,
+      rgbA[2] + (rgbB[2] - rgbA[2]) * amount,
     ]);
   }
 
-  function buildSchemes(rgb) {
-    return [
-      ["Complementary", [adjust(rgb, 180, 0, 1)]],
-      ["Analogous", [adjust(rgb, -30, 0, 1), adjust(rgb, 30, 0, 1)]],
-      ["Triadic", [adjust(rgb, 120, 0, 1), adjust(rgb, 240, 0, 1)]],
-      ["Split-Complementary", [adjust(rgb, 150, 0, 1), adjust(rgb, 210, 0, 1)]],
-    ];
+  const LIGHT_TEMPS = { warm: 1, neutral: 0, cool: -1 };
+
+  // 12-step named color wheel (matches the HSL hue circle) for turning a
+  // hue back into a word a painter would reach for.
+  const HUE_NAMES = [
+    [0, "Red"], [30, "Orange"], [60, "Yellow"], [90, "Chartreuse"],
+    [120, "Green"], [150, "Spring Green"], [180, "Cyan"], [210, "Azure"],
+    [240, "Blue"], [270, "Violet"], [300, "Magenta"], [330, "Rose"],
+  ];
+  function nameForHue(hueFrac) {
+    const deg = ((hueFrac * 360) % 360 + 360) % 360;
+    let best = HUE_NAMES[0][1], bestDist = Infinity;
+    for (const [ang, name] of HUE_NAMES) {
+      const d = Math.min(Math.abs(deg - ang), 360 - Math.abs(deg - ang));
+      if (d < bestDist) { bestDist = d; best = name; }
+    }
+    return best;
+  }
+  function describeColor(rgb) {
+    const [h, s, l] = rgbToHsl(rgb);
+    if (s < 0.12) {
+      if (l > 0.9) return "White";
+      if (l < 0.1) return "Black";
+      return "Gray";
+    }
+    let prefix = "";
+    if (l > 0.82) prefix = "Pale ";
+    else if (l < 0.25) prefix = "Deep ";
+    return prefix + nameForHue(h);
+  }
+
+  // The core suggestion: what to mix in instead of black (shadow) and
+  // instead of white (highlight), based on where the base color's
+  // complement / near-hue sits on the wheel.
+  function buildSuggestions(rgb, lightTemp) {
+    const mult = LIGHT_TEMPS[lightTemp] ?? 1;
+
+    const shadowHueShift = 180 + mult * 15;
+    const shadowMix = hueOnlyColor(rgb, shadowHueShift, 0.62, 0.34);
+    const shadowResult = adjust(blend(rgb, shadowMix, 0.35), 0, -0.3, 1.05);
+
+    const highlightHueShift = mult * 22;
+    const highlightMix = hueOnlyColor(rgb, highlightHueShift, 0.55, 0.82);
+    const highlightResult = adjust(blend(rgb, highlightMix, 0.35), 0, 0.45, 0.9);
+
+    return {
+      shadow: { mix: shadowMix, result: shadowResult, hueShift: shadowHueShift },
+      highlight: { mix: highlightMix, result: highlightResult, hueShift: highlightHueShift },
+    };
   }
 
   // ---- copy to clipboard --------------------------------------------
@@ -610,6 +735,11 @@
     el.classList.add("copied");
     setTimeout(() => el.classList.remove("copied"), 900);
   }
+  function contrastingText(rgb) {
+    const [r, g, b] = rgb;
+    const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+    return luminance > 140 ? "#161311" : "#f5f2ec";
+  }
 
   // ---- rendering ------------------------------------------------------
 
@@ -620,67 +750,149 @@
     presetChips: document.getElementById("presetChips"),
     lightToggle: document.getElementById("lightToggle"),
     baseBlock: document.getElementById("baseBlock"),
+    baseName: document.getElementById("baseName"),
     baseHex: document.getElementById("baseHex"),
     baseRgb: document.getElementById("baseRgb"),
-    baseHsl: document.getElementById("baseHsl"),
-    paletteStrip: document.getElementById("paletteStrip"),
-    wheelGroups: document.getElementById("wheelGroups"),
+    suggestGrid: document.getElementById("suggestGrid"),
+    wheelMarkers: document.getElementById("wheelMarkers"),
+    wheelLegend: document.getElementById("wheelLegend"),
   };
 
   let lightTemp = "warm";
   let currentRgb = hexToRgb("#E0AC81");
 
+  const RING_SIZE = 224; // px -- must match .wheel-ring-wrap's 14rem (16px root)
+  const RING_RADIUS = RING_SIZE / 2 - 15;
+
+  function ringPosition(hueFrac) {
+    const angle = (hueFrac * 360 - 90) * (Math.PI / 180);
+    return {
+      x: RING_SIZE / 2 + RING_RADIUS * Math.cos(angle),
+      y: RING_SIZE / 2 + RING_RADIUS * Math.sin(angle),
+    };
+  }
+
+  function miniSwatch(tag, rgb, name) {
+    const hex = rgbToHex(rgb);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "mini-swatch";
+    btn.setAttribute("aria-label", `${tag} ${name}, ${hex}. Click to copy.`);
+    btn.innerHTML = `
+      <span class="block" style="background:${hex}"><span class="flash">Copied</span></span>
+      <span class="tag">${tag}</span>
+      <span class="name">${name}</span>
+      <span class="hex mono">${hex}</span>
+    `;
+    btn.addEventListener("click", () => {
+      copyText(hex);
+      flashCopied(btn);
+    });
+    return btn;
+  }
+
+  function suggestCard(title, why, mixRgb, resultRgb) {
+    const mixName = describeColor(mixRgb);
+    const card = document.createElement("div");
+    card.className = "suggest-card";
+    const row = document.createElement("div");
+    row.className = "swatch-row";
+    row.appendChild(miniSwatch("Mix in", mixRgb, mixName));
+    const arrow = document.createElement("span");
+    arrow.className = "arrow";
+    arrow.textContent = "→";
+    arrow.setAttribute("aria-hidden", "true");
+    row.appendChild(arrow);
+    row.appendChild(miniSwatch("Looks like", resultRgb, "Shaded result"));
+
+    card.innerHTML = `<span class="kicker">${title.kicker}</span><h3>${title.heading}</h3>`;
+    card.appendChild(row);
+    const why_p = document.createElement("p");
+    why_p.className = "why";
+    why_p.innerHTML = why;
+    card.appendChild(why_p);
+    return card;
+  }
+
   function render() {
     const hex = rgbToHex(currentRgb);
-    const [h, s, l] = rgbToHsl(currentRgb);
 
+    const baseName = describeColor(currentRgb);
     els.baseBlock.style.background = hex;
+    els.baseName.textContent = baseName;
     els.baseHex.textContent = hex;
     els.baseRgb.textContent = `${currentRgb[0]}, ${currentRgb[1]}, ${currentRgb[2]}`;
-    els.baseHsl.textContent = `${Math.round(h * 360)}°, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%`;
     els.colorPicker.value = hex;
 
-    els.paletteStrip.innerHTML = "";
-    buildPalette(currentRgb, lightTemp).forEach(([label, rgb, note]) => {
-      const rowHex = rgbToHex(rgb);
-      const card = document.createElement("button");
-      card.className = "swatch-card";
-      card.type = "button";
-      card.setAttribute("aria-label", `${label}, ${rowHex}. Click to copy.`);
-      card.innerHTML = `
-        <span class="block" style="background:${rowHex}"><span class="flash">Copied</span></span>
-        <span class="label">${label}</span>
-        <span class="hex mono">${rowHex}</span>
-        <span class="note">${note}</span>
-      `;
-      card.addEventListener("click", () => {
-        copyText(rowHex);
-        flashCopied(card);
-      });
-      els.paletteStrip.appendChild(card);
-    });
+    const suggestions = buildSuggestions(currentRgb, lightTemp);
+    const shadowName = describeColor(suggestions.shadow.mix);
+    const highlightName = describeColor(suggestions.highlight.mix);
 
-    els.wheelGroups.innerHTML = "";
-    buildSchemes(currentRgb).forEach(([name, colors]) => {
-      const group = document.createElement("div");
-      group.className = "wheel-group";
-      const dabs = colors
-        .map((c) => {
-          const cHex = rgbToHex(c);
-          return `<button type="button" class="dab-card" data-hex="${cHex}" aria-label="${name} ${cHex}. Click to copy.">
-            <span class="dot" style="background:${cHex}"><span class="flash"></span></span>
-            <span class="hex mono">${cHex}</span>
-          </button>`;
-        })
-        .join("");
-      group.innerHTML = `<h3>${name}</h3><div class="dabs">${dabs}</div>`;
-      els.wheelGroups.appendChild(group);
-    });
-    els.wheelGroups.querySelectorAll(".dab-card").forEach((card) => {
-      card.addEventListener("click", () => {
-        copyText(card.dataset.hex);
-        flashCopied(card);
+    els.suggestGrid.innerHTML = "";
+    els.suggestGrid.appendChild(
+      suggestCard(
+        { kicker: "Instead of black", heading: "Shade with" },
+        `Black just adds gray and flattens color. <strong>${shadowName}</strong> sits
+         roughly opposite ${baseName} on the wheel &mdash; mixing in a touch
+         darkens the color without killing it.`,
+        suggestions.shadow.mix,
+        suggestions.shadow.result
+      )
+    );
+    els.suggestGrid.appendChild(
+      suggestCard(
+        { kicker: "Instead of white", heading: "Highlight with" },
+        `Pure white bleaches out color the same way black kills it. A touch
+         of <strong>${highlightName}</strong> keeps the highlight feeling
+         like brighter light, not a hole in the painting.`,
+        suggestions.highlight.mix,
+        suggestions.highlight.result
+      )
+    );
+
+    // wheel diagram
+    els.wheelMarkers.innerHTML = "";
+    els.wheelLegend.innerHTML = "";
+    const [baseHue] = rgbToHsl(currentRgb);
+    const points = [
+      { tag: "B", role: "Your color", rgb: currentRgb, hueFrac: baseHue, isBase: true },
+      { tag: "S", role: "Shade with", rgb: suggestions.shadow.mix, hueFrac: baseHue + suggestions.shadow.hueShift / 360 },
+      { tag: "H", role: "Highlight with", rgb: suggestions.highlight.mix, hueFrac: baseHue + suggestions.highlight.hueShift / 360 },
+    ];
+    points.forEach((p) => {
+      const pos = ringPosition(p.hueFrac);
+      const pHex = rgbToHex(p.rgb);
+      const marker = document.createElement("button");
+      marker.type = "button";
+      marker.className = "marker" + (p.isBase ? " base" : "");
+      marker.style.left = `${pos.x}px`;
+      marker.style.top = `${pos.y}px`;
+      marker.style.background = pHex;
+      marker.style.color = contrastingText(p.rgb);
+      marker.textContent = p.tag;
+      marker.setAttribute("aria-label", `${p.role}, ${pHex}. Click to copy.`);
+      marker.addEventListener("click", () => {
+        copyText(pHex);
+        flashCopied(marker);
       });
+      els.wheelMarkers.appendChild(marker);
+
+      const li = document.createElement("li");
+      const legendBtn = document.createElement("button");
+      legendBtn.type = "button";
+      legendBtn.innerHTML = `
+        <span class="dot" style="background:${pHex}"></span>
+        <span>
+          <span class="role">${p.tag} &mdash; ${p.role}</span>
+          <span class="name-hex">${describeColor(p.rgb)} <span class="mono">${pHex}</span></span>
+        </span>
+      `;
+      legendBtn.addEventListener("click", () => {
+        copyText(pHex);
+        flashCopied(legendBtn);
+      });
+      li.appendChild(legendBtn);
+      els.wheelLegend.appendChild(li);
     });
   }
 
